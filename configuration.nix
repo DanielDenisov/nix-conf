@@ -67,12 +67,6 @@
   services.picom = {
     enable = true;
     vSync = true;
-    fade = true;
-    fadeSteps = [ 0.05 0.05 ];
-    shadow = false;
-    settings = {
-      corner-radius = 4;
-    };
   };
 
   # Audio (PipeWire)
@@ -96,20 +90,17 @@
   hardware.acpilight.enable = true;
 
   # Power management — TLP for ThinkPad battery life
+  # No charge thresholds set: battery charges to 100% normally.
+  # (Thresholds can be added later if you want to cap at 80% for longevity.)
   services.tlp = {
     enable = true;
     settings = {
-      CPU_SCALING_GOVERNOR_ON_AC  = "performance";
+      CPU_SCALING_GOVERNOR_ON_AC  = "schedutil";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-      TLP_DEFAULT_MODE            = "BAT";
-      TLP_PERSISTENT_DEFAULT      = 0;
-      START_CHARGE_THRESH_BAT0    = 75;
-      STOP_CHARGE_THRESH_BAT0     = 80;
     };
   };
-
-  # Thermal management
-  services.thermald.enable = true;
+  # thermald intentionally disabled — ThinkPads use EC-based thermal control;
+  # thermald fights with it and can cause unnecessary fan spin.
 
   # Multi-monitor — autorandr runs on login/hotplug via systemd
   services.autorandr.enable = true;
