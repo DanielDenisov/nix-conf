@@ -138,6 +138,12 @@
       blueman-applet &
       pasystray &
 
+      # Screen lock: xss-lock relays logind lock events (lid close) to slock
+      xss-lock -- slock &
+
+      # Auto-suspend: after 5 min of X idle (includes lid-closed with locked screen)
+      xautolock -time 5 -locker "systemctl suspend" &
+
       # Screenshot directory
       mkdir -p ~/Pictures/scrot
 

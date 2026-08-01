@@ -19,7 +19,7 @@ static const char col_base[]     = "#1e1e2e";
 static const char col_surface0[] = "#313244";
 static const char col_text[]     = "#cdd6f4";
 static const char col_mauve[]    = "#cba6f7";
-static const char col_red[]      = "#e78284";
+static const char col_red[]      = "#89b4fa"; /* changed to blue to test color application */
 
 static const char *colors[][3] = {
 	/*               fg           bg            border       */
@@ -84,12 +84,11 @@ static const char *yazicmd[]  = { "kitty", "--title", "Files", "yazi", NULL };
   " 'Brightness -')        brightnessctl set 10%-;;" \
   " esac"
 
-/* clipboard: self-starts greenclip if not running, then shows dmenu history */
+/* clipboard: greenclip daemon runs from autostart; select entry → push to clipboard */
 #define CLIPCMD \
-  "pgrep -x greenclip >/dev/null || (greenclip daemon &); sleep 0.1;" \
-  " sel=$(greenclip print 2>/dev/null" \
+  "sel=$(greenclip print 2>/dev/null | grep ." \
   " | dmenu -fn 'JetBrainsMono Nerd Font Mono:size=10' -nb '#1e1e2e' -nf '#cdd6f4' -sb '#cba6f7' -sf '#1e1e2e' -p 'Clip:' -l 10)" \
-  " && printf '%s' \"$sel\" | xclip -selection clipboard"
+  "; [ -n \"$sel\" ] && printf '%s' \"$sel\" | xclip -selection clipboard"
 
 /* volume / brightness / screenshot */
 static const char *volupcmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+", NULL };

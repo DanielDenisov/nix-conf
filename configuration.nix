@@ -175,6 +175,12 @@ in
   # ── Backlight ─────────────────────────────────────────────────────────────
   hardware.acpilight.enable = true;
 
+  # ── Screen lock + lid behaviour ───────────────────────────────────────────
+  # slock: minimal password locker (needs setuid to read /etc/shadow)
+  programs.slock.enable = true;
+  # Lock screen when lid closes; xss-lock in autostart.sh picks up the signal
+  services.logind.lidSwitch = "lock";
+
   # ── Power management (TLP) ────────────────────────────────────────────────
   # No charge thresholds — battery charges to 100% normally.
   services.tlp = {
@@ -233,6 +239,8 @@ in
     pamixer
     wireplumber
     iw              # wifi signal strength (for status bar)
+    xss-lock        # bridge between logind lock events and the screen locker
+    xautolock       # suspend after 5 min of X idle (covers lid-closed idle)
   ];
 
   system.stateVersion = "24.11";
