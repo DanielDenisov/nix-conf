@@ -42,6 +42,8 @@
 
     # Code Stuff
     vscode
+    android-studio
+    usbutils
   ];
 
   fonts.fontconfig.enable = true;
@@ -77,6 +79,10 @@
       };
     };
   };
+
+  #Android Studio
+  nixpkgs.config.android_sdk.accept_license = true;
+
 
 
   # Kitty — Catppuccin Mocha + JetBrainsMono Nerd Font
@@ -170,7 +176,7 @@
       xss-lock -- slock &
 
       # Auto-suspend: after 5 min of X idle (includes lid-closed with locked screen)
-      xautolock -time 5 -locker "systemctl suspend" &
+      xautolock -time 10 -locker "systemctl suspend" &
 
       # Screenshot directory
       mkdir -p ~/Pictures/scrot

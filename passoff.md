@@ -135,7 +135,7 @@ Battery reads `BAT0` or `BAT1` (whichever exists). Uses `acpi` / sysfs.
 
 Flow: lid closes → logind sends lock event → xss-lock runs slock (password prompt) → after 5 min no keyboard/mouse input → xautolock triggers `systemctl suspend`.
 
-- To adjust the idle-suspend timer: change `-time 5` in the `xautolock` line in `home.nix` autostart (value is in minutes).
+- To adjust the idle-suspend timer: change `-time 10` in the `xautolock` line in `home.nix` autostart (value is in minutes).
 - Side effect by design: also suspends after 5 min of idle with lid open (battery saving).
 
 ---
