@@ -1,37 +1,74 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Minimal GRUB theme: Keith background + Catppuccin Mocha colours, no external deps
-  grubTheme = pkgs.runCommand "grub-theme-keith" { } ''
-    mkdir -p $out
-    cp ${./keith_bg-removebg-preview.png} $out/background.png
+  # Catppuccin GRUB base theme (catppuccin logo + dark bg — restored)
+  catppuccinGrub = pkgs.fetchzip {
+    url  = "https://github.com/catppuccin/grub/archive/refs/heads/main.tar.gz";
+    hash = "sha256-jgM22pvCQvb0bjQQXoiqGMgScR9AgCK3OfDF5Ud+/mk=";
+  };
+
+  # GRUB theme: original catppuccin aesthetic (small logo centred in dark bg)
+  # with a wider menu so long NixOS labels don't get cut off
+  grubTheme = pkgs.runCommand "grub-theme-catppuccin" { } ''
+    cp -r ${catppuccinGrub}/src/catppuccin-mocha-grub-theme $out
+    chmod -R u+w $out
     cat > $out/theme.txt << 'EOF'
 title-text: ""
 desktop-image: "background.png"
 desktop-color: "#1E1E2E"
+terminal-font: "Unifont Regular 16"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+terminal-border: "0"
 
 + boot_menu {
-  left = 5%
-  top = 25%
-  width = 55%
-  height = 55%
+  left = 10%
+  top = 50%
+  width = 80%
+  height = 45%
+  item_font = "Unifont Regular 16"
   item_color = "#CDD6F4"
-  selected_item_color = "#1E1E2E"
-  selected_background_color = "#CBA6F7"
+  selected_item_color = "#CDD6F4"
+  icon_width = 32
+  icon_height = 32
+  item_icon_space = 20
   item_height = 36
-  item_padding = 4
-  item_spacing = 4
+  item_padding = 8
+  item_spacing = 6
+  selected_item_pixmap_style = "select_*.png"
 }
 
 + label {
-  top = 88%
-  left = 5%
-  width = 55%
+  top = 97%
+  left = 10%
+  width = 80%
   align = "left"
   id = "__timeout__"
   text = "Booting in %d seconds"
   color = "#A6ADC8"
+  font = "Unifont Regular 14"
 }
+EOF
+  '';
+
+  # SDDM theme: catppuccin-mocha-mauve with user's wallpaper
+  sddmTheme = pkgs.runCommand "catppuccin-sddm-custom" {} ''
+    mkdir -p $out/share/sddm/themes/catppuccin-mocha-mauve
+    cp -r ${pkgs.catppuccin-sddm}/share/sddm/themes/catppuccin-mocha-mauve/. \
+           $out/share/sddm/themes/catppuccin-mocha-mauve/
+    chmod -R u+w $out/share/sddm/themes/catppuccin-mocha-mauve
+    cp ${./background.jpg} $out/share/sddm/themes/catppuccin-mocha-mauve/backgrounds/wall.jpg
+    cat > $out/share/sddm/themes/catppuccin-mocha-mauve/theme.conf << 'EOF'
+[General]
+Font="JetBrainsMono Nerd Font"
+FontSize=10
+ClockEnabled="true"
+CustomBackground="true"
+LoginBackground="false"
+Background="backgrounds/wall.jpg"
+UserIcon="false"
 EOF
   '';
 
@@ -103,14 +140,10 @@ in
     };
   };
 
-  # ── Login manager — ly (TUI, minimal, Catppuccin-friendly) ────────────────
-  services.displayManager.ly = {
+  # ── Login manager — SDDM with Catppuccin Mocha theme + wallpaper ─────────
+  services.displayManager.sddm = {
     enable = true;
-    settings = {
-      animation     = "dots";
-      clock         = "%c";
-      vi_mode       = false;
-    };
+    theme  = "catppuccin-mocha-mauve";
   };
 
   # ── Compositor ────────────────────────────────────────────────────────────
@@ -178,6 +211,7 @@ in
   environment.systemPackages = with pkgs; [
     dmenu           # patched via overlay — must be listed here to actually install
     settingsMenu    # Mod+s settings picker (system package so it's always in PATH)
+    sddmTheme       # catppuccin SDDM theme with custom wallpaper
     xclip
     xrandr
     arandr

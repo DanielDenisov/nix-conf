@@ -72,6 +72,9 @@ static const char *termcmd[]     = { "kitty", NULL };
 static const char *settingscmd[] = { "settings-menu", NULL };
 static const char *yazicmd[]     = { "kitty", "--title", "Files", "yazi", NULL };
 
+/* clipboard (greenclip daemon must be running — started in autostart.sh) */
+#define CLIPCMD "sel=$(greenclip print | grep . | dmenu -fn 'JetBrainsMono Nerd Font Mono:size=10' -nb '#1e1e2e' -nf '#cdd6f4' -sb '#cba6f7' -sf '#1e1e2e' -p 'Clip:' -l 10) && printf '%s' \"$sel\" | xclip -selection clipboard"
+
 /* volume / brightness / screenshot */
 static const char *volupcmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+", NULL };
 static const char *voldncmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-", NULL };
@@ -85,6 +88,7 @@ static const Key keys[] = {
 	{ MODKEY,           XK_p,                                spawn,          {.v = dmenucmd } },
 	{ MODKEY,           XK_s,                                spawn,          {.v = settingscmd } },
 	{ MODKEY,           XK_e,                                spawn,          {.v = yazicmd } },
+	{ MODKEY,           XK_v,                                spawn,          SHCMD(CLIPCMD) },
 	{ MODKEY|ShiftMask, XK_Return,                           spawn,          {.v = termcmd } },
 	{ MODKEY,           XK_b,                                togglebar,      {0} },
 	{ MODKEY,           XK_j,                                focusstack,     {.i = +1 } },

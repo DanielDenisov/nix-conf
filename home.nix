@@ -30,6 +30,9 @@
     # GTK icon theme for styled systray icons
     papirus-icon-theme
 
+    # Clipboard manager (dmenu-integrated history)
+    haskellPackages.greenclip
+
     # Utilities
     wmctrl
     xdg-utils
@@ -111,6 +114,9 @@
     };
   };
 
+  # Wallpaper — deployed from repo
+  home.file.".config/wallpaper.jpg".source = ./background.jpg;
+
   # Cheatsheet — sourced from repo, deployed to ~/.local/share/cheatsheet
   home.file.".local/share/cheatsheet".source = ./cheatsheet/cheatsheet.txt;
 
@@ -120,8 +126,11 @@
     text = ''
       #!/bin/sh
 
-      # Wallpaper (Catppuccin base)
-      xsetroot -solid "#1e1e2e" &
+      # Wallpaper
+      feh --bg-fill ~/.config/wallpaper.jpg &
+
+      # Clipboard daemon (history accessible via Mod+v → dmenu)
+      greenclip daemon &
 
       # Systray applets (provide dropdown menus in the tray)
       nm-applet &
