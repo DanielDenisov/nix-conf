@@ -19,7 +19,7 @@ static const char col_base[]     = "#1e1e2e";
 static const char col_surface0[] = "#313244";
 static const char col_text[]     = "#cdd6f4";
 static const char col_mauve[]    = "#cba6f7";
-static const char col_red[]      = "#f38ba8";
+static const char col_red[]      = "#e78284";
 
 static const char *colors[][3] = {
 	/*               fg           bg            border       */
@@ -68,12 +68,28 @@ static char dmenumon[2] = "0";
 static const char *dmenucmd[]    = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont,
                                      "-nb", "#1e1e2e", "-nf", "#cdd6f4",
                                      "-sb", "#cba6f7", "-sf", "#1e1e2e", NULL };
-static const char *termcmd[]     = { "kitty", NULL };
-static const char *settingscmd[] = { "settings-menu", NULL };
-static const char *yazicmd[]     = { "kitty", "--title", "Files", "yazi", NULL };
+static const char *termcmd[]  = { "kitty", NULL };
+static const char *yazicmd[]  = { "kitty", "--title", "Files", "yazi", NULL };
 
-/* clipboard (greenclip daemon must be running — started in autostart.sh) */
-#define CLIPCMD "sel=$(greenclip print | grep . | dmenu -fn 'JetBrainsMono Nerd Font Mono:size=10' -nb '#1e1e2e' -nf '#cdd6f4' -sb '#cba6f7' -sf '#1e1e2e' -p 'Clip:' -l 10) && printf '%s' \"$sel\" | xclip -selection clipboard"
+/* settings: inlined so only dmenu (always in PATH) is needed */
+#define SETTINGSCMD \
+  "sel=$(printf 'Display (arandr)\\nAudio (pavucontrol)\\nBluetooth (blueman)\\nNetwork\\nBrightness +\\nBrightness -'" \
+  " | dmenu -fn 'JetBrainsMono Nerd Font Mono:size=10' -nb '#1e1e2e' -nf '#cdd6f4' -sb '#cba6f7' -sf '#1e1e2e' -p 'Settings:');" \
+  " case \"$sel\" in" \
+  " 'Display (arandr)')    arandr &;;" \
+  " 'Audio (pavucontrol)') pavucontrol &;;" \
+  " 'Bluetooth (blueman)') blueman-manager &;;" \
+  " 'Network')             nm-connection-editor &;;" \
+  " 'Brightness +')        brightnessctl set 10%+;;" \
+  " 'Brightness -')        brightnessctl set 10%-;;" \
+  " esac"
+
+/* clipboard: self-starts greenclip if not running, then shows dmenu history */
+#define CLIPCMD \
+  "pgrep -x greenclip >/dev/null || (greenclip daemon &); sleep 0.1;" \
+  " sel=$(greenclip print 2>/dev/null" \
+  " | dmenu -fn 'JetBrainsMono Nerd Font Mono:size=10' -nb '#1e1e2e' -nf '#cdd6f4' -sb '#cba6f7' -sf '#1e1e2e' -p 'Clip:' -l 10)" \
+  " && printf '%s' \"$sel\" | xclip -selection clipboard"
 
 /* volume / brightness / screenshot */
 static const char *volupcmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+", NULL };
@@ -86,7 +102,7 @@ static const char *scrotcmd[]   = { "scrot", "-s", "/home/nixdan/Pictures/scrot/
 static const Key keys[] = {
 	/* modifier                     key                       function        argument */
 	{ MODKEY,           XK_p,                                spawn,          {.v = dmenucmd } },
-	{ MODKEY,           XK_s,                                spawn,          {.v = settingscmd } },
+	{ MODKEY,           XK_s,                                spawn,          SHCMD(SETTINGSCMD) },
 	{ MODKEY,           XK_e,                                spawn,          {.v = yazicmd } },
 	{ MODKEY,           XK_v,                                spawn,          SHCMD(CLIPCMD) },
 	{ MODKEY|ShiftMask, XK_Return,                           spawn,          {.v = termcmd } },
