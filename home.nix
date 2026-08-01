@@ -59,23 +59,22 @@
   programs.vscode = {
     enable = true;
     
-    # Installs VS Code along with your requested extensions
-    extensions = with pkgs.vscode-extensions; [
-      mechatroner.rainbow-csv
-      yzhang.markdown-all-in-one
-      ms-python.python
-      jnoortheen.nix-ide
-      catppuccin.catppuccin-vsc
-    ];
+    # Updated syntax using the default profile
+    profiles.default = {
+      extensions = with pkgs.vscode-extensions; [
+        mechatroner.rainbow-csv
+        yzhang.markdown-all-in-one
+        ms-python.python
+        jnoortheen.nix-ide
+        catppuccin.catppuccin-vsc
+      ];
 
-    # Configures VS Code settings including the Catppuccin theme
-    userSettings = {
-      "workbench.colorTheme" = "Catppuccin Mocha"; # Options: Latte, Frappé, Macchiato, Mocha
-      "workbench.iconTheme" = "catppuccin-mocha";
-      
-      # Optional: Configures the Nix IDE extension to use nixpkgs-fmt for formatting
-      "nix.enableLanguageServer" = true;
-      "nix.serverPath" = "nil"; 
+      userSettings = {
+        "workbench.colorTheme" = "Catppuccin Mocha"; 
+        "workbench.iconTheme" = "catppuccin-mocha";
+        "nix.enableLanguageServer" = true;
+        "nix.serverPath" = "nil"; 
+      };
     };
   };
 
