@@ -19,11 +19,13 @@ static const char col_base[]     = "#1e1e2e";
 static const char col_surface0[] = "#313244";
 static const char col_text[]     = "#cdd6f4";
 static const char col_mauve[]    = "#cba6f7";
+static const char col_red[]      = "#f38ba8";
 
 static const char *colors[][3] = {
 	/*               fg           bg            border       */
 	[SchemeNorm] = { col_text,    col_base,     col_surface0 },
 	[SchemeSel]  = { col_base,    col_mauve,    col_mauve    },
+	[SchemeUrg]  = { col_base,    col_red,      col_red      },
 };
 
 /* tagging */
@@ -67,7 +69,7 @@ static const char *dmenucmd[]    = { "dmenu_run", "-m", dmenumon, "-fn", dmenufo
                                      "-nb", "#1e1e2e", "-nf", "#cdd6f4",
                                      "-sb", "#cba6f7", "-sf", "#1e1e2e", NULL };
 static const char *termcmd[]     = { "kitty", NULL };
-static const char *settingscmd[] = { "/home/nixdan/.local/bin/settings-menu", NULL };
+static const char *settingscmd[] = { "settings-menu", NULL };
 static const char *yazicmd[]     = { "kitty", "--title", "Files", "yazi", NULL };
 
 /* volume / brightness / screenshot */

@@ -1,67 +1,55 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Catppuccin GRUB base theme
-  catppuccinGrub = pkgs.fetchzip {
-    url  = "https://github.com/catppuccin/grub/archive/refs/heads/main.tar.gz";
-    hash = "sha256-jgM22pvCQvb0bjQQXoiqGMgScR9AgCK3OfDF5Ud+/mk=";
-  };
-
-  # Custom GRUB theme: Keith + left-aligned menu + Catppuccin Mocha colors
+  # Minimal GRUB theme: Keith background + Catppuccin Mocha colours, no external deps
   grubTheme = pkgs.runCommand "grub-theme-keith" { } ''
-    cp -r ${catppuccinGrub}/src/catppuccin-mocha-grub-theme $out
-    chmod -R u+w $out
-
-    # Replace background and logo with Keith the rat
+    mkdir -p $out
     cp ${./keith_bg-removebg-preview.png} $out/background.png
-    cp ${./keith_bg-removebg-preview.png} $out/logo.png
-
-    # Patch theme.txt:
-    # - left-align the boot menu (not centered with cutoff)
-    # - widen it so entries aren't truncated
-    # - left-align the timeout label
     cat > $out/theme.txt << 'EOF'
-# Catppuccin Mocha + Keith the Rat
-
 title-text: ""
 desktop-image: "background.png"
-desktop-image-scale-method: "none"
 desktop-color: "#1E1E2E"
-terminal-font: "Unifont Regular 16"
-terminal-left: "0"
-terminal-top: "0"
-terminal-width: "100%"
-terminal-height: "100%"
-terminal-border: "0"
 
 + boot_menu {
   left = 5%
-  top = 20%
-  width = 50%
-  height = 65%
-  item_font = "Unifont Regular 16"
+  top = 25%
+  width = 55%
+  height = 55%
   item_color = "#CDD6F4"
-  selected_item_color = "#CDD6F4"
-  icon_width = 32
-  icon_height = 32
-  item_icon_space = 20
+  selected_item_color = "#1E1E2E"
+  selected_background_color = "#CBA6F7"
   item_height = 36
-  item_padding = 8
-  item_spacing = 6
-  selected_item_pixmap_style = "select_*.png"
+  item_padding = 4
+  item_spacing = 4
 }
 
 + label {
   top = 88%
   left = 5%
-  width = 50%
+  width = 55%
   align = "left"
   id = "__timeout__"
   text = "Booting in %d seconds"
   color = "#A6ADC8"
-  font = "Unifont Regular 14"
 }
 EOF
+  '';
+
+  # Settings menu — system package so it's always in PATH regardless of home-manager
+  settingsMenu = pkgs.writeScriptBin "settings-menu" ''
+    #!/bin/sh
+    choice=$(printf 'Display (arandr)\nAudio (pavucontrol)\nBluetooth (blueman)\nNetwork\nBrightness +\nBrightness -' \
+             | dmenu -fn "JetBrainsMono Nerd Font Mono:size=10" \
+                     -nb "#1e1e2e" -nf "#cdd6f4" -sb "#cba6f7" -sf "#1e1e2e" \
+                     -p "Settings:")
+    case "$choice" in
+      "Display (arandr)")    arandr ;;
+      "Audio (pavucontrol)") pavucontrol ;;
+      "Bluetooth (blueman)") blueman-manager ;;
+      "Network")             nm-connection-editor ;;
+      "Brightness +")        brightnessctl set 10%+ ;;
+      "Brightness -")        brightnessctl set 10%- ;;
+    esac
   '';
 
   # Build label — written by build.sh before each rebuild
@@ -119,7 +107,7 @@ in
   services.displayManager.ly = {
     enable = true;
     settings = {
-      animation     = "matrix";
+      animation     = "dots";
       clock         = "%c";
       vi_mode       = false;
     };
@@ -189,6 +177,7 @@ in
   # ── System packages ───────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
     dmenu           # patched via overlay — must be listed here to actually install
+    settingsMenu    # Mod+s settings picker (system package so it's always in PATH)
     xclip
     xrandr
     arandr

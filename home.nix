@@ -111,26 +111,6 @@
     };
   };
 
-  # Settings menu — opened by Mod+s
-  home.file.".local/bin/settings-menu" = {
-    executable = true;
-    text = ''
-      #!/bin/sh
-      choice=$(printf "Display (arandr)\nAudio (pavucontrol)\nBluetooth (blueman)\nNetwork\nBrightness +\nBrightness -" \
-               | dmenu -fn "JetBrainsMono Nerd Font Mono:size=10" \
-                        -nb "#1e1e2e" -nf "#cdd6f4" -sb "#cba6f7" -sf "#1e1e2e" \
-                        -p "Settings:")
-      case "$choice" in
-        "Display (arandr)")    arandr ;;
-        "Audio (pavucontrol)") pavucontrol ;;
-        "Bluetooth (blueman)") blueman-manager ;;
-        "Network")             nm-connection-editor ;;
-        "Brightness +")        brightnessctl set 10%+ ;;
-        "Brightness -")        brightnessctl set 10%- ;;
-      esac
-    '';
-  };
-
   # Cheatsheet — sourced from repo, deployed to ~/.local/share/cheatsheet
   home.file.".local/share/cheatsheet".source = ./cheatsheet/cheatsheet.txt;
 
@@ -209,6 +189,13 @@
         vol=$(printf "%s" "$vol_raw" | awk '{printf "%d", $2*100}')
         printf "%s" "$vol_raw" | grep -q MUTED && vicon="󰸈" || vicon="󰕾"
 
+        # Bluetooth
+        if bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
+          bticon="󰂯"
+        else
+          bticon="󰂲"
+        fi
+
         # Wifi signal
         wdev=$(iw dev 2>/dev/null | awk '/Interface/{print $2; exit}')
         if [ -n "$wdev" ]; then
@@ -221,21 +208,19 @@
           else
             wicon="󰤭"
           fi
+          S_WIFI="^c#89dceb^ ''${wicon} ^d^"
         else
-          wicon=""
+          S_WIFI=""
         fi
 
         DATE=$(date "+%a %d %b  %H:%M")
-        # status2d color codes: ^c#fg^^b#bg^ text ^d^ resets
-        # Catppuccin Mocha palette used per segment
         S_CPU="^c#a6e3a1^󰻠 ''${cpu}%^d^"
         S_RAM="^c#89b4fa^󰍛 ''${ram}^d^"
         S_BAT="^c#f9e2af^''${bat}^d^"
+        S_BT="^c#f5c2e7^''${bticon}^d^"
         S_VOL="^c#cba6f7^''${vicon} ''${vol}%^d^"
         S_DATE="^c#cdd6f4^󰥔 ''${DATE}^d^"
-        bar="  ''${S_CPU}  ''${S_RAM}  ''${S_BAT}  ''${S_VOL}"
-        [ -n "$wicon" ] && bar="''${bar}  ^c#89dceb^''${wicon}^d^"
-        bar="''${bar}  ''${S_DATE}  "
+        bar="  ''${S_CPU}  ''${S_RAM}  ''${S_BAT}  ''${S_BT}  ''${S_VOL}  ''${S_WIFI}  ''${S_DATE}  "
         xsetroot -name "$bar"
       done &
     '';
