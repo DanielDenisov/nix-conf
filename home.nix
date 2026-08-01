@@ -49,6 +49,7 @@
       name = "Daniel";
       email = "github@danieldenisov.com";
     };
+    settings.credential.helper = "!gh auth git-credential";
   };
 
   # Kitty — Catppuccin Mocha + JetBrainsMono Nerd Font

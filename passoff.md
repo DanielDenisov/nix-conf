@@ -17,6 +17,8 @@ NixOS flake on nixpkgs 26.05 + Home Manager release-26.05.
 | `background.jpg` | wallpaper used by feh (DWM desktop) and SDDM login screen |
 | `keith_bg-removebg-preview.png` | Keith the rat (transparent PNG) — composited into GRUB background |
 
+> **Critical DWM build rule**: never commit `dwm/config.h`. The Makefile generates it from `config.def.h` at build time. If `config.h` exists in the tree, every change to `config.def.h` is silently ignored. It was deleted in session 2 after causing months of invisible no-ops.
+
 ---
 
 ## Theme — Catppuccin Mocha throughout
@@ -27,9 +29,11 @@ NixOS flake on nixpkgs 26.05 + Home Manager release-26.05.
 | Surface0 | `#313244` | inactive borders |
 | Text | `#cdd6f4` | normal text |
 | Mauve | `#cba6f7` | accent, selected items, borders |
-| Red | `#e78284` | urgent windows (SchemeUrg), dmenu SchemeOut |
+| Red | `#e78284` | urgent windows (SchemeUrg) |
 
 DWM schemes: `SchemeNorm`, `SchemeSel`, `SchemeUrg` (3-entry colors array).
+
+> **Note**: `col_red` in `dwm/config.def.h` is currently `#89b4fa` (blue) — left in place from a color-pipeline verification test. Change it back to `#e78284` whenever you want Catppuccin red on urgent windows.
 
 ---
 
@@ -53,9 +57,9 @@ DWM schemes: `SchemeNorm`, `SchemeSel`, `SchemeUrg` (3-entry colors array).
 |---|---|
 | `Mod+Enter` | kitty terminal |
 | `Mod+p` | dmenu_run |
-| `Mod+s` | settings menu (dmenu inline — **currently broken, see below**) |
+| `Mod+s` | settings menu (dmenu: Display/Audio/Bluetooth/Network/Brightness) |
 | `Mod+e` | yazi file browser in kitty |
-| `Mod+v` | clipboard history via greenclip + dmenu (**currently broken, see below**) |
+| `Mod+v` | clipboard history via greenclip + dmenu |
 | `Mod+j/k` | focus next/prev |
 | `Mod+Shift+j/k` | movestack |
 | `Mod+h/l` | resize master |
@@ -104,6 +108,8 @@ Battery reads `BAT0` or `BAT1` (whichever exists). Uses `acpi` / sysfs.
 - **dconf**: `programs.dconf.enable = true` (needed for GTK/home-manager theming)
 - **dmenu**: built from `./dmenu` source via `nixpkgs.overlays`; must also be in `environment.systemPackages`
 - **Firefox zoom**: `environment.sessionVariables.MOZ_USE_XINPUT2 = "1"` (touchpad pinch-to-zoom on X11)
+- **Screen lock**: `programs.slock.enable = true` (setuid locker); `services.logind.lidSwitch = "lock"` (lid close → lock signal)
+- **Auto-suspend**: `xss-lock` + `xautolock` in system packages; wired up in autostart.sh
 
 ---
 
@@ -119,37 +125,22 @@ Battery reads `BAT0` or `BAT1` (whichever exists). Uses `acpi` / sysfs.
 - **Yazi**: Catppuccin Mocha theme via `~/.config/yazi/theme.toml`
 
 ### Managed files
-- `~/.dwm/autostart.sh` — starts: feh wallpaper, greenclip daemon, nm-applet, blueman-applet, pasystray, kitty cheatsheet (tag 9), status bar loop
+- `~/.dwm/autostart.sh` — starts: feh wallpaper, greenclip daemon, nm-applet, blueman-applet, pasystray, xss-lock, xautolock, kitty cheatsheet (tag 9), status bar loop
 - `~/.config/wallpaper.jpg` — sourced from `./background.jpg`
 - `~/.local/share/cheatsheet` — sourced from `./cheatsheet/cheatsheet.txt`
 
 ---
 
-## Known broken / pending
+## Lid close / lock / sleep
 
-### ✅ Settings menu (Mod+s) — FIXED (needs rebuild)
-- Root cause: DWM binary was never rebuilt after SETTINGSCMD was written into config.def.h.
-- PATH is correct (confirmed via NixOS set-environment; ~/.nix-profile/bin is in DWM's inherited PATH).
-- All required binaries are in PATH: arandr, pavucontrol (home pkg), blueman-manager (system via services.blueman), nm-connection-editor (system via programs.nm-applet), brightnessctl (system).
-- Will work after `./build.sh`.
+Flow: lid closes → logind sends lock event → xss-lock runs slock (password prompt) → after 5 min no keyboard/mouse input → xautolock triggers `systemctl suspend`.
 
-### ✅ Clipboard (Mod+v) — FIXED (needs rebuild)
-- Root cause: same as settings — DWM binary was not rebuilt. Also simplified CLIPCMD.
-- Confirmed: greenclip daemon IS running (PID found), `greenclip print` outputs 10 entries.
-- CLIPCMD now: `sel=$(greenclip print | grep . | dmenu ...) ; [ -n "$sel" ] && printf '%s' "$sel" | xclip -selection clipboard`
-- Will work after `./build.sh`.
+- To adjust the idle-suspend timer: change `-time 5` in the `xautolock` line in `home.nix` autostart (value is in minutes).
+- Side effect by design: also suspends after 5 min of idle with lid open (battery saving).
 
-### ✅ Color testing — col_red changed to blue #89b4fa
-- Changed from `#e78284` to `#89b4fa` (Catppuccin blue) to verify color changes actually apply after rebuild.
-- SchemeUrg (urgent windows) will be blue. If you see blue, the color pipeline works; revert to desired color afterwards.
+---
 
-### ✅ Lid close → lock → sleep — IMPLEMENTED
-- `services.logind.lidSwitch = "lock"` → logind sends lock signal on lid close
-- `xss-lock -- slock &` in autostart.sh → slock runs when logind signals lock
-- `xautolock -time 5 -locker "systemctl suspend" &` in autostart.sh → suspend after 5 min X idle
-- `programs.slock.enable = true` + `xss-lock` + `xautolock` added to system packages
-- Flow: lid closes → lock screen immediately (password required) → 5 min no input → suspend
-- Side effect: also suspends after 5 min idle with lid open (good battery behaviour)
+## Known pending
 
 ### ⚠️ Home-manager dconf build error (recurring)
 - Error: `GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable`
@@ -161,11 +152,6 @@ Battery reads `BAT0` or `BAT1` (whichever exists). Uses `acpi` / sysfs.
 arandr   # arrange monitors → File > Save As "docked"
 autorandr --save docked
 autorandr --save mobile   # with external monitor unplugged
-```
-
-### ⚠️ Screenshots directory
-```sh
-mkdir -p ~/Pictures/scrot
 ```
 
 ### ⚠️ gh CLI needs auth
