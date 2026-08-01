@@ -23,6 +23,13 @@
     blueman        # bluetooth GUI
     pavucontrol    # audio mixer GUI
 
+    # File explorer
+    yazi
+    ueberzugpp     # image preview in yazi
+
+    # GTK icon theme for styled systray icons
+    papirus-icon-theme
+
     # Utilities
     wmctrl
     xdg-utils
@@ -219,13 +226,130 @@
         fi
 
         DATE=$(date "+%a %d %b  %H:%M")
-        bar="  󰻠 ''${cpu}%  󰍛 ''${ram}  ''${bat}  ''${vicon} ''${vol}%"
-        [ -n "$wicon" ] && bar="''${bar}  ''${wicon}"
-        bar="''${bar}  󰥔 ''${DATE}  "
+        # status2d color codes: ^c#fg^^b#bg^ text ^d^ resets
+        # Catppuccin Mocha palette used per segment
+        S_CPU="^c#a6e3a1^󰻠 ''${cpu}%^d^"
+        S_RAM="^c#89b4fa^󰍛 ''${ram}^d^"
+        S_BAT="^c#f9e2af^''${bat}^d^"
+        S_VOL="^c#cba6f7^''${vicon} ''${vol}%^d^"
+        S_DATE="^c#cdd6f4^󰥔 ''${DATE}^d^"
+        bar="  ''${S_CPU}  ''${S_RAM}  ''${S_BAT}  ''${S_VOL}"
+        [ -n "$wicon" ] && bar="''${bar}  ^c#89dceb^''${wicon}^d^"
+        bar="''${bar}  ''${S_DATE}  "
         xsetroot -name "$bar"
       done &
     '';
   };
+
+  # GTK — Catppuccin Mocha theme + Papirus-Dark icons (affects systray icons)
+  gtk = {
+    enable = true;
+    theme = {
+      name    = "catppuccin-mocha-mauve-standard+default";
+      package = pkgs.catppuccin-gtk.override {
+        accents    = [ "mauve" ];
+        variant    = "mocha";
+        tweaks     = [ "normal" ];
+      };
+    };
+    iconTheme = {
+      name    = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+    cursorTheme = {
+      name    = "Catppuccin-Mocha-Dark-Cursors";
+      package = pkgs.catppuccin-cursors.mochaDark;
+    };
+    gtk3.extraConfig = { gtk-application-prefer-dark-theme = 1; };
+    gtk4.extraConfig = { gtk-application-prefer-dark-theme = 1; };
+  };
+
+  # Yazi — TUI file manager with Catppuccin Mocha theme
+  programs.yazi = {
+    enable  = true;
+    settings = {
+      manager = {
+        show_hidden   = false;
+        show_symlink  = true;
+        sort_by       = "natural";
+        sort_dir_first = true;
+      };
+    };
+    keymap = {
+      manager.prepend_keymap = [
+        { on = "q"; run = "quit"; desc = "Quit"; }
+      ];
+    };
+  };
+
+  # Yazi Catppuccin Mocha colorscheme
+  home.file.".config/yazi/theme.toml".text = ''
+    [manager]
+    cwd = { fg = "#89b4fa" }
+
+    hovered         = { fg = "#1e1e2e", bg = "#cba6f7" }
+    preview_hovered = { underline = true }
+
+    find_keyword  = { fg = "#f9e2af", italic = true }
+    find_position = { fg = "#f5c2e7", bg = "reset", italic = true }
+
+    marker_copied  = { fg = "#a6e3a1", bg = "#a6e3a1" }
+    marker_cut     = { fg = "#f38ba8", bg = "#f38ba8" }
+    marker_marked  = { fg = "#cba6f7", bg = "#cba6f7" }
+    marker_selected = { fg = "#89b4fa", bg = "#89b4fa" }
+
+    [status]
+    overall  = { fg = "#cdd6f4", bg = "#1e1e2e" }
+    progress = { fg = "#1e1e2e", bg = "#89b4fa" }
+    sep_left  = { fg = "#313244", bg = "#1e1e2e" }
+    sep_right = { fg = "#313244", bg = "#1e1e2e" }
+
+    [input]
+    border   = { fg = "#cba6f7" }
+    title    = { fg = "#cba6f7" }
+    value    = { fg = "#cdd6f4" }
+    selected = { reversed = true }
+
+    [select]
+    border   = { fg = "#cba6f7" }
+    active   = { fg = "#f5c2e7" }
+    inactive = { fg = "#6c7086" }
+
+    [tasks]
+    border  = { fg = "#cba6f7" }
+    title   = {}
+    hovered = { underline = true }
+
+    [which]
+    mask            = { bg = "#1e1e2e" }
+    cand            = { fg = "#89dceb" }
+    rest            = { fg = "#6c7086" }
+    desc            = { fg = "#f5c2e7" }
+    separator       = "  "
+    separator_style = { fg = "#585b70" }
+
+    [notify]
+    title_info  = { fg = "#a6e3a1" }
+    title_warn  = { fg = "#f9e2af" }
+    title_error = { fg = "#f38ba8" }
+
+    [filetype]
+    rules = [
+      { mime = "image/*",     fg = "#89b4fa" },
+      { mime = "video/*",     fg = "#f5c2e7" },
+      { mime = "audio/*",     fg = "#cba6f7" },
+      { mime = "application/zip",    fg = "#f38ba8" },
+      { mime = "application/x-tar", fg = "#f38ba8" },
+      { mime = "text/*",      fg = "#a6e3a1" },
+      { name = "*.nix",       fg = "#89b4fa" },
+      { name = "*.sh",        fg = "#a6e3a1" },
+      { name = "*/",          fg = "#cba6f7" },
+      { name = "*",           fg = "#cdd6f4" },
+    ]
+  '';
+
+  # Keybind: Mod+e opens yazi in kitty
+  # (add this line to dwm config.def.h if desired — see cheatsheet)
 
   programs.home-manager.enable = true;
 }

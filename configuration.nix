@@ -1,13 +1,70 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Catppuccin GRUB theme — fetched from upstream
+  # Catppuccin GRUB base theme
   catppuccinGrub = pkgs.fetchzip {
     url  = "https://github.com/catppuccin/grub/archive/refs/heads/main.tar.gz";
     hash = "sha256-jgM22pvCQvb0bjQQXoiqGMgScR9AgCK3OfDF5Ud+/mk=";
   };
 
-  # Build label — written by buildsys.sh before each rebuild
+  # Custom GRUB theme: Keith + left-aligned menu + Catppuccin Mocha colors
+  grubTheme = pkgs.runCommand "grub-theme-keith" { } ''
+    cp -r ${catppuccinGrub}/src/catppuccin-mocha-grub-theme $out
+    chmod -R u+w $out
+
+    # Replace background and logo with Keith the rat
+    cp ${./keith_bg-removebg-preview.png} $out/background.png
+    cp ${./keith_bg-removebg-preview.png} $out/logo.png
+
+    # Patch theme.txt:
+    # - left-align the boot menu (not centered with cutoff)
+    # - widen it so entries aren't truncated
+    # - left-align the timeout label
+    cat > $out/theme.txt << 'EOF'
+# Catppuccin Mocha + Keith the Rat
+
+title-text: ""
+desktop-image: "background.png"
+desktop-image-scale-method: "none"
+desktop-color: "#1E1E2E"
+terminal-font: "Unifont Regular 16"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+terminal-border: "0"
+
++ boot_menu {
+  left = 5%
+  top = 20%
+  width = 50%
+  height = 65%
+  item_font = "Unifont Regular 16"
+  item_color = "#CDD6F4"
+  selected_item_color = "#CDD6F4"
+  icon_width = 32
+  icon_height = 32
+  item_icon_space = 20
+  item_height = 36
+  item_padding = 8
+  item_spacing = 6
+  selected_item_pixmap_style = "select_*.png"
+}
+
++ label {
+  top = 88%
+  left = 5%
+  width = 50%
+  align = "left"
+  id = "__timeout__"
+  text = "Booting in %d seconds"
+  color = "#A6ADC8"
+  font = "Unifont Regular 14"
+}
+EOF
+  '';
+
+  # Build label — written by build.sh before each rebuild
   buildLabel = if builtins.pathExists ./label
                then lib.strings.trim (builtins.readFile ./label)
                else "unnamed";
@@ -25,7 +82,7 @@ in
     efiSupport          = true;
     useOSProber         = true;        # detect Windows/other OSes
     configurationLimit  = 20;          # keep 20 generations; older ones in submenu
-    theme               = "${catppuccinGrub}/src/catppuccin-mocha-grub-theme";
+    theme               = grubTheme;
   };
 
   # Build label shown in GRUB entry (set by buildsys.sh)
@@ -47,13 +104,14 @@ in
       enable  = true;
       package = pkgs.dwm.overrideAttrs { src = ./dwm; };
     };
-    libinput = {
-      enable = true;
-      touchpad = {
-        naturalScrolling = true;
-        tapping          = true;
-        middleEmulation  = true;
-      };
+  };
+
+  services.libinput = {
+    enable = true;
+    touchpad = {
+      naturalScrolling = true;
+      tapping          = true;
+      middleEmulation  = true;
     };
   };
 
@@ -74,7 +132,7 @@ in
   };
 
   # ── Audio (PipeWire) ──────────────────────────────────────────────────────
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable      = true;
   services.pipewire = {
     enable            = true;
@@ -104,6 +162,9 @@ in
   # ── Multimonitor ──────────────────────────────────────────────────────────
   services.autorandr.enable = true;
 
+  # ── dconf (required for GTK theming via Home Manager) ────────────────────
+  programs.dconf.enable = true;
+
   # ── Network manager applet ────────────────────────────────────────────────
   programs.nm-applet.enable = true;
 
@@ -127,6 +188,7 @@ in
 
   # ── System packages ───────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
+    dmenu           # patched via overlay — must be listed here to actually install
     xclip
     xrandr
     arandr

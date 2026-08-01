@@ -68,6 +68,7 @@ static const char *dmenucmd[]    = { "dmenu_run", "-m", dmenumon, "-fn", dmenufo
                                      "-sb", "#cba6f7", "-sf", "#1e1e2e", NULL };
 static const char *termcmd[]     = { "kitty", NULL };
 static const char *settingscmd[] = { "/home/nixdan/.local/bin/settings-menu", NULL };
+static const char *yazicmd[]     = { "kitty", "--title", "Files", "yazi", NULL };
 
 /* volume / brightness / screenshot */
 static const char *volupcmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+", NULL };
@@ -81,6 +82,7 @@ static const Key keys[] = {
 	/* modifier                     key                       function        argument */
 	{ MODKEY,           XK_p,                                spawn,          {.v = dmenucmd } },
 	{ MODKEY,           XK_s,                                spawn,          {.v = settingscmd } },
+	{ MODKEY,           XK_e,                                spawn,          {.v = yazicmd } },
 	{ MODKEY|ShiftMask, XK_Return,                           spawn,          {.v = termcmd } },
 	{ MODKEY,           XK_b,                                togglebar,      {0} },
 	{ MODKEY,           XK_j,                                focusstack,     {.i = +1 } },
