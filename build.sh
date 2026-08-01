@@ -1,8 +1,7 @@
 #!/bin/sh
 # Usage: ./build.sh "My change description"
-# Rebuilds system + home, names the GRUB entry, commits with that message.
+# Builds system + home first. Only commits if both succeed.
 
-set -e
 cd "$(dirname "$0")"
 
 LABEL="${1:-}"
@@ -12,20 +11,34 @@ if [ -z "$LABEL" ]; then
 fi
 [ -z "$LABEL" ] && echo "Error: label cannot be empty." && exit 1
 
-# Write label so configuration.nix can read it
-printf '%s' "$LABEL" > label
+# NixOS label must match [a-zA-Z0-9:_.-]+ — sanitize by replacing spaces/bad chars with hyphens
+SAFE_LABEL=$(printf '%s' "$LABEL" | tr ' ' '-' | tr -cd 'a-zA-Z0-9:_.-')
+[ -z "$SAFE_LABEL" ] && echo "Error: label contains no valid characters." && exit 1
 
-# Stage and commit everything
-git add -A
-git commit -m "$LABEL" 2>/dev/null || echo "(nothing new to commit — rebuilding anyway)"
+# Write sanitized label for configuration.nix to read
+printf '%s' "$SAFE_LABEL" > label
 
-echo ""
 echo "==> Building system (sudo required)..."
-sudo nixos-rebuild switch --flake .#nixdan
+if ! sudo nixos-rebuild switch --flake .#nixdan; then
+  echo ""
+  echo "System build FAILED — nothing committed."
+  exit 1
+fi
 
 echo ""
 echo "==> Building home..."
-home-manager switch --flake .#nixdan
+if ! home-manager switch --flake .#nixdan; then
+  echo ""
+  echo "Home build FAILED — nothing committed."
+  exit 1
+fi
+
+# Both succeeded — now commit
+echo ""
+echo "==> Committing..."
+git add -A
+git commit -m "$LABEL" 2>/dev/null || echo "(nothing new to commit)"
 
 echo ""
-echo "Done. GRUB entry: NixOS — $LABEL"
+echo "Done. GRUB entry: NixOS — $SAFE_LABEL"
+[ "$SAFE_LABEL" != "$LABEL" ] && echo "Note: label was sanitized from '$LABEL' to '$SAFE_LABEL' for GRUB compatibility."

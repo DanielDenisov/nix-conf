@@ -2,11 +2,9 @@
 
 let
   # Catppuccin GRUB theme — fetched from upstream
-  catppuccinGrub = pkgs.fetchFromGitHub {
-    owner = "catppuccin";
-    repo  = "grub";
-    rev   = "803bc3705be57a31a2c3d6c2f91fe1cb59c1ec0b";
-    hash  = "sha256-/bSolCta8GCZ4lP0u5NVqYQ9Y3ZooORZAFRQ0NBnfSY=";
+  catppuccinGrub = pkgs.fetchzip {
+    url  = "https://github.com/catppuccin/grub/archive/refs/heads/main.tar.gz";
+    hash = "sha256-jgM22pvCQvb0bjQQXoiqGMgScR9AgCK3OfDF5Ud+/mk=";
   };
 
   # Build label — written by buildsys.sh before each rebuild
@@ -130,7 +128,7 @@ in
   # ── System packages ───────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
     xclip
-    xorg.xrandr
+    xrandr
     arandr
     brightnessctl
     scrot
