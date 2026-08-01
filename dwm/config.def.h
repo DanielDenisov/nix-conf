@@ -67,7 +67,7 @@ static const char *dmenucmd[]    = { "dmenu_run", "-m", dmenumon, "-fn", dmenufo
                                      "-nb", "#1e1e2e", "-nf", "#cdd6f4",
                                      "-sb", "#cba6f7", "-sf", "#1e1e2e", NULL };
 static const char *termcmd[]     = { "kitty", NULL };
-static const char *settingscmd[] = { "/bin/sh", "-c", "$HOME/.local/bin/settings-menu", NULL };
+static const char *settingscmd[] = { "/home/nixdan/.local/bin/settings-menu", NULL };
 
 /* volume / brightness / screenshot */
 static const char *volupcmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%+", NULL };

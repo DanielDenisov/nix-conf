@@ -16,7 +16,7 @@
     # Nerd Font (includes all icons used in status bar)
     nerd-fonts.jetbrains-mono
     noto-fonts
-    noto-fonts-emoji
+    noto-fonts-color-emoji
 
     # Systray / GUI tools
     pasystray      # audio tray icon with volume dropdown
@@ -157,7 +157,7 @@
         didle=$(( i2 - i1 ))
         [ "$dtotal" -gt 0 ] && cpu=$(( (dtotal-didle)*100/dtotal )) || cpu=0
 
-        # RAM used (no max shown per request)
+        # RAM used
         ram=$(awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{
           u=(t-a)/1024
           if (u>=1024) printf "%.1fG",u/1024; else printf "%dM",u
@@ -169,8 +169,8 @@
           [ -d "/sys/class/power_supply/$b" ] && bp="/sys/class/power_supply/$b" && break
         done
         if [ -n "$bp" ]; then
-          cap=$(cat "$bp/capacity"  2>/dev/null || echo "?")
-          bst=$(cat "$bp/status"    2>/dev/null || echo "?")
+          cap=$(cat "$bp/capacity" 2>/dev/null || echo "?")
+          bst=$(cat "$bp/status"   2>/dev/null || echo "?")
           case "$bst" in
             Charging) bicon="󰂄" ;;
             Full)     bicon="󰁹" ;;
@@ -182,18 +182,14 @@
               elif [ "$cap" -ge 15 ] 2>/dev/null; then bicon="󰁻"
               else bicon="󰁺"; fi ;;
           esac
-          # Remaining time (only meaningful while discharging)
           rtime=""
           if [ "$bst" = "Discharging" ]; then
             if [ -f "$bp/energy_now" ] && [ -f "$bp/power_now" ]; then
               enow=$(cat "$bp/energy_now"); pnow=$(cat "$bp/power_now")
               [ "$pnow" -gt 0 ] && {
                 mins=$(( enow*60/pnow ))
-                rtime=" $(( mins/60 ))h$(( mins%60 ))m"
+                rtime="-$(( mins/60 ))h$(( mins%60 ))m"
               }
-            elif command -v acpi >/dev/null 2>&1; then
-              rtime=$(acpi -b 2>/dev/null | grep -o '[0-9]*:[0-9]*:[0-9]*' | head -1 | cut -d: -f1-2 | sed 's/:/ h/')
-              [ -n "$rtime" ] && rtime=" ''${rtime}m"
             fi
           fi
           bat="''${bicon} ''${cap}%''${rtime}"
@@ -206,8 +202,27 @@
         vol=$(printf "%s" "$vol_raw" | awk '{printf "%d", $2*100}')
         printf "%s" "$vol_raw" | grep -q MUTED && vicon="󰸈" || vicon="󰕾"
 
+        # Wifi signal
+        wdev=$(iw dev 2>/dev/null | awk '/Interface/{print $2; exit}')
+        if [ -n "$wdev" ]; then
+          sig=$(iw dev "$wdev" link 2>/dev/null | awk '/signal:/{print $2}')
+          if [ -n "$sig" ]; then
+            if   [ "$sig" -ge -50 ] 2>/dev/null; then wicon="󰤨"
+            elif [ "$sig" -ge -65 ] 2>/dev/null; then wicon="󰤥"
+            elif [ "$sig" -ge -75 ] 2>/dev/null; then wicon="󰤢"
+            else wicon="󰤯"; fi
+          else
+            wicon="󰤭"
+          fi
+        else
+          wicon=""
+        fi
+
         DATE=$(date "+%a %d %b  %H:%M")
-        xsetroot -name "  󰻠 ''${cpu}%   󰍛 ''${ram}   ''${bat}   ''${vicon} ''${vol}%   󰥔 ''${DATE}  "
+        bar="  󰻠 ''${cpu}%  󰍛 ''${ram}  ''${bat}  ''${vicon} ''${vol}%"
+        [ -n "$wicon" ] && bar="''${bar}  ''${wicon}"
+        bar="''${bar}  󰥔 ''${DATE}  "
+        xsetroot -name "$bar"
       done &
     '';
   };
