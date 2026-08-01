@@ -217,10 +217,11 @@ in
   users.users.nixdan = {
     isNormalUser  = true;
     description   = "nixdan";
-    extraGroups   = [ "networkmanager" "wheel" "video" "audio" "bluetooth" ];
+    extraGroups   = [ "networkmanager" "wheel" "video" "audio" "bluetooth" "adbusers"];
   };
 
   nixpkgs.config.allowUnfree = true;
+
 
   # ── System packages ───────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [

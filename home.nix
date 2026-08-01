@@ -83,8 +83,6 @@
   #Android Studio
   nixpkgs.config.android_sdk.accept_license = true;
 
-
-
   # Kitty — Catppuccin Mocha + JetBrainsMono Nerd Font
   programs.kitty = {
     enable = true;
