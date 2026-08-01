@@ -7,11 +7,17 @@ let
     hash = "sha256-jgM22pvCQvb0bjQQXoiqGMgScR9AgCK3OfDF5Ud+/mk=";
   };
 
-  # GRUB theme: original catppuccin aesthetic (small logo centred in dark bg)
-  # with a wider menu so long NixOS labels don't get cut off
-  grubTheme = pkgs.runCommand "grub-theme-catppuccin" { } ''
+  # GRUB theme: catppuccin assets + Keith (small, centred at top) replacing the
+  # catppuccin swirls logo. imagemagick composites Keith onto a solid dark background.
+  grubTheme = pkgs.runCommand "grub-theme-catppuccin" {
+    nativeBuildInputs = [ pkgs.imagemagick ];
+  } ''
     cp -r ${catppuccinGrub}/src/catppuccin-mocha-grub-theme $out
     chmod -R u+w $out
+    convert -size 1920x1080 xc:"#1E1E2E" \
+      \( ${./keith_bg-removebg-preview.png} -resize 340x340 \) \
+      -gravity North -geometry +0+70 -composite \
+      PNG24:$out/background.png
     cat > $out/theme.txt << 'EOF'
 title-text: ""
 desktop-image: "background.png"
@@ -25,9 +31,9 @@ terminal-border: "0"
 
 + boot_menu {
   left = 10%
-  top = 50%
+  top = 53%
   width = 80%
-  height = 45%
+  height = 42%
   item_font = "Unifont Regular 16"
   item_color = "#CDD6F4"
   selected_item_color = "#CDD6F4"
@@ -182,6 +188,9 @@ in
 
   # ── Multimonitor ──────────────────────────────────────────────────────────
   services.autorandr.enable = true;
+
+  # ── Firefox touchpad pinch-to-zoom (XInput2 multitouch on X11) ───────────
+  environment.sessionVariables.MOZ_USE_XINPUT2 = "1";
 
   # ── dconf (required for GTK theming via Home Manager) ────────────────────
   programs.dconf.enable = true;

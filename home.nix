@@ -8,6 +8,7 @@
 
   home.packages = with pkgs; [
     git
+    gh              # GitHub CLI for push/PR/issue from terminal
     fastfetch
     kitty
     firefox
