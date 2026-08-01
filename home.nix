@@ -39,6 +39,9 @@
     xdg-utils
     xdg-user-dirs
     acpi           # battery time remaining
+
+    # Code Stuff
+    vscode
   ];
 
   fonts.fontconfig.enable = true;
@@ -51,6 +54,31 @@
     };
     settings.credential.helper = "!gh auth git-credential";
   };
+
+  # VSCode
+  programs.vscode = {
+    enable = true;
+    
+    # Installs VS Code along with your requested extensions
+    extensions = with pkgs.vscode-extensions; [
+      mechatroner.rainbow-csv
+      yzhang.markdown-all-in-one
+      ms-python.python
+      jnoortheen.nix-ide
+      catppuccin.catppuccin-vsc
+    ];
+
+    # Configures VS Code settings including the Catppuccin theme
+    userSettings = {
+      "workbench.colorTheme" = "Catppuccin Mocha"; # Options: Latte, Frappé, Macchiato, Mocha
+      "workbench.iconTheme" = "catppuccin-mocha";
+      
+      # Optional: Configures the Nix IDE extension to use nixpkgs-fmt for formatting
+      "nix.enableLanguageServer" = true;
+      "nix.serverPath" = "nil"; 
+    };
+  };
+
 
   # Kitty — Catppuccin Mocha + JetBrainsMono Nerd Font
   programs.kitty = {
