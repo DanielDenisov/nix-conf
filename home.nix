@@ -27,6 +27,7 @@
     # File explorer
     yazi
     ueberzugpp     # image preview in yazi
+    kdePackages.dolphin  # GUI file manager
 
     # GTK icon theme for styled systray icons
     papirus-icon-theme
