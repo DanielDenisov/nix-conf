@@ -45,6 +45,9 @@
     vscode
     android-studio
     usbutils
+
+    # Notes
+    obsidian
   ];
 
   fonts.fontconfig.enable = true;
