@@ -96,7 +96,12 @@ static const char *voldncmd[]   = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@
 static const char *volmutecmd[] = { "wpctl", "set-mute",   "@DEFAULT_AUDIO_SINK@", "toggle", NULL };
 static const char *brupcmd[]    = { "brightnessctl", "set", "10%+", NULL };
 static const char *brdncmd[]    = { "brightnessctl", "set", "10%-", NULL };
-static const char *scrotcmd[]   = { "scrot", "-s", "/home/nixdan/Pictures/scrot/%Y-%m-%d_%H-%M-%S.png", NULL };
+/* screenshot: box-select → save → clipboard → dunst notification */
+#define SCROTCMD \
+  "F=\"$HOME/Pictures/scrot/$(date +%%Y-%%m-%%d_%%H-%%M-%%S).png\";" \
+  "scrot -s \"$F\" &&" \
+  "xclip -selection clipboard -t image/png < \"$F\" &&" \
+  "notify-send -i camera Screenshot \"Copied · $(basename \"$F\")\" -t 3000"
 
 static const Key keys[] = {
 	/* modifier                     key                       function        argument */
@@ -133,7 +138,7 @@ static const Key keys[] = {
 	{ 0,                XF86XK_AudioMute,                    spawn,          {.v = volmutecmd } },
 	{ 0,                XF86XK_MonBrightnessUp,              spawn,          {.v = brupcmd } },
 	{ 0,                XF86XK_MonBrightnessDown,            spawn,          {.v = brdncmd } },
-	{ 0,                XK_Print,                            spawn,          {.v = scrotcmd } },
+	{ 0,                XK_Print,                            spawn,          SHCMD(SCROTCMD) },
 	TAGKEYS(            XK_1,                                0)
 	TAGKEYS(            XK_2,                                1)
 	TAGKEYS(            XK_3,                                2)
