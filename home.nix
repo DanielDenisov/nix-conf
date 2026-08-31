@@ -48,6 +48,9 @@
 
     # Notes
     obsidian
+
+    # Messaging
+    signal-desktop
   ];
 
   fonts.fontconfig.enable = true;
