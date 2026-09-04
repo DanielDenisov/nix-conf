@@ -45,6 +45,7 @@
     vscode
     android-studio
     usbutils
+    cmake
 
     # Notes
     obsidian
