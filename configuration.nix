@@ -1,64 +1,6 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Catppuccin GRUB base theme (catppuccin logo + dark bg — restored)
-  catppuccinGrub = pkgs.fetchzip {
-    url  = "https://github.com/catppuccin/grub/archive/refs/heads/main.tar.gz";
-    hash = "sha256-jgM22pvCQvb0bjQQXoiqGMgScR9AgCK3OfDF5Ud+/mk=";
-  };
-
-  # GRUB theme: catppuccin assets + Keith (small, centred at top) replacing the
-  # catppuccin swirls logo. imagemagick composites Keith onto a solid dark background.
-  grubTheme = pkgs.runCommand "grub-theme-catppuccin" {
-    nativeBuildInputs = [ pkgs.imagemagick ];
-  } ''
-    cp -r ${catppuccinGrub}/src/catppuccin-mocha-grub-theme $out
-    chmod -R u+w $out
-    convert -size 1920x1080 xc:"#1E1E2E" \
-      \( ${./keith_bg-removebg-preview.png} -resize 340x340 \) \
-      -gravity North -geometry +0+70 -composite \
-      PNG24:$out/background.png
-    cat > $out/theme.txt << 'EOF'
-title-text: ""
-desktop-image: "background.png"
-desktop-color: "#1E1E2E"
-terminal-font: "Unifont Regular 16"
-terminal-left: "0"
-terminal-top: "0"
-terminal-width: "100%"
-terminal-height: "100%"
-terminal-border: "0"
-
-+ boot_menu {
-  left = 10%
-  top = 53%
-  width = 80%
-  height = 42%
-  item_font = "Unifont Regular 16"
-  item_color = "#CDD6F4"
-  selected_item_color = "#CDD6F4"
-  icon_width = 32
-  icon_height = 32
-  item_icon_space = 20
-  item_height = 36
-  item_padding = 8
-  item_spacing = 6
-  selected_item_pixmap_style = "select_*.png"
-}
-
-+ label {
-  top = 97%
-  left = 10%
-  width = 80%
-  align = "left"
-  id = "__timeout__"
-  text = "Booting in %d seconds"
-  color = "#A6ADC8"
-  font = "Unifont Regular 14"
-}
-EOF
-  '';
-
   # SDDM theme: catppuccin-mocha-mauve with user's wallpaper
   sddmTheme = pkgs.runCommand "catppuccin-sddm-custom" {} ''
     mkdir -p $out/share/sddm/themes/catppuccin-mocha-mauve
@@ -105,18 +47,54 @@ in
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  # ── Bootloader — GRUB ─────────────────────────────────────────────────────
+  # ── Bootloader — systemd-boot ─────────────────────────────────────────────
+  # No os-prober, no `device = "nodev"`, no MBR/BIOS guesswork: systemd-boot
+  # only ever needs an ESP mounted at /boot. That is the whole install contract.
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.grub = {
-    enable              = true;
-    device              = "nodev";
-    efiSupport          = true;
-    useOSProber         = true;        # detect Windows/other OSes
-    configurationLimit  = 20;          # keep 20 generations; older ones in submenu
-    theme               = grubTheme;
+  boot.loader.systemd-boot = {
+    enable = true;
+
+    # Anti-clutter: only the last few generations get a menu entry. systemd-boot
+    # has no GRUB-style "advanced options" submenu, so this number IS the menu.
+    configurationLimit = 5;
+
+    consoleMode = "max";      # use the largest text mode the firmware offers
+    editor      = false;      # no kernel-cmdline editing at the menu (init=/bin/sh)
+
+    # Sort keys control menu order. NixOS entries first, Windows pinned below.
+    sortKey = "a_nixos";
+
+    # Windows lives on its OWN ESP (/dev/sda1) on a different disk, so
+    # systemd-boot cannot auto-discover it — auto-discovery only scans the ESP
+    # it manages. This declares a chainload entry instead.
+    #
+    # efiDeviceHandle must match this machine's firmware. To find it:
+    #   1. temporarily set `edk2-uefi-shell.enable = true;` below and rebuild
+    #   2. reboot, pick "EFI Shell" in the menu
+    #   3. run `map -c`, find the handle whose device path contains the
+    #      Windows ESP (100M FAT partition on sda), e.g. HD0b / FS1
+    #   4. put that handle here, turn the shell entry back off
+    windows."11" = {
+      title           = "Windows 11";
+      efiDeviceHandle = "HD0b";   # <-- VERIFY on this machine, see above
+      sortKey         = "z_windows";
+    };
+
+    # Flip to true once, to discover efiDeviceHandle, then flip back.
+    edk2-uefi-shell.enable = false;
   };
 
-  # Build label shown in GRUB entry (set by buildsys.sh)
+  # Short enough to be out of the way, long enough to actually pick Windows.
+  boot.loader.timeout = 5;
+
+  # Keeps old generations from piling up on the (small) ESP in the first place.
+  nix.gc = {
+    automatic = true;
+    dates     = "weekly";
+    options   = "--delete-older-than 14d";
+  };
+
+  # Build label shown in the boot entry title (set by buildsys.sh)
   system.nixos.label = buildLabel;
 
   # ── Networking ────────────────────────────────────────────────────────────
