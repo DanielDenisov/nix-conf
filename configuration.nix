@@ -64,24 +64,10 @@ in
     # Sort keys control menu order. NixOS entries first, Windows pinned below.
     sortKey = "a_nixos";
 
-    # Windows lives on its OWN ESP (/dev/sda1) on a different disk, so
-    # systemd-boot cannot auto-discover it — auto-discovery only scans the ESP
-    # it manages. This declares a chainload entry instead.
-    #
-    # efiDeviceHandle must match this machine's firmware. To find it:
-    #   1. temporarily set `edk2-uefi-shell.enable = true;` below and rebuild
-    #   2. reboot, pick "EFI Shell" in the menu
-    #   3. run `map -c`, find the handle whose device path contains the
-    #      Windows ESP (100M FAT partition on sda), e.g. HD0b / FS1
-    #   4. put that handle here, turn the shell entry back off
-    windows."11" = {
-      title           = "Windows 11";
-      efiDeviceHandle = "HD0b";   # <-- VERIFY on this machine, see above
-      sortKey         = "z_windows";
-    };
-
-    # Flip to true once, to discover efiDeviceHandle, then flip back.
-    edk2-uefi-shell.enable = false;
+    # Windows needs NO config here: it lives on this same ESP
+    # (/boot/EFI/Microsoft/Boot/bootmgfw.efi), so systemd-boot auto-discovers it
+    # and shows it as "Windows Boot Manager". Verified via `bootctl list`
+    # (type: Automatic, id: auto-windows). This is the thing os-prober was for.
   };
 
   # Short enough to be out of the way, long enough to actually pick Windows.
