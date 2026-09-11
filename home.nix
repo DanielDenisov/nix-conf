@@ -52,6 +52,12 @@
 
     # Messaging
     signal-desktop
+
+    # Browsers
+    google-chrome
+
+    # VPN
+    mullvad-vpn
   ];
 
   fonts.fontconfig.enable = true;

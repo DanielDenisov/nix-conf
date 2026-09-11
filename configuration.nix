@@ -187,6 +187,9 @@ in
   nixpkgs.config.allowUnfree = true;
 
 
+  # ── Mullvad VPN daemon (package installed via home-manager) ──────────────
+  services.mullvad-vpn.enable = true;
+
   # ── System packages ───────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
     dmenu           # patched via overlay — must be listed here to actually install
