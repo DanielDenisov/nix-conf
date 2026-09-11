@@ -52,6 +52,7 @@
 
     # Messaging
     signal-desktop
+    discord
 
     # Browsers
     google-chrome
