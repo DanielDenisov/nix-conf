@@ -40,6 +40,7 @@
     xdg-utils
     xdg-user-dirs
     acpi           # battery time remaining
+    unzip
 
     # Code Stuff
     vscode
