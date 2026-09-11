@@ -47,6 +47,8 @@
     android-studio
     usbutils
     cmake
+    (python3.withPackages (ps: [ ps.pip ]))
+    uv                # fast Python package/venv manager
 
     # Notes
     obsidian
