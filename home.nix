@@ -27,7 +27,11 @@
     # File explorer
     yazi
     ueberzugpp     # image preview in yazi
-    kdePackages.dolphin  # GUI file manager
+    xfce.thunar                # GUI file manager (standalone, no KDE deps)
+    xfce.thunar-archive-plugin # right-click compress/extract
+    xfce.thunar-volman         # removable media handling
+    xfce.exo                   # provides "Open Terminal Here" via exo-open
+    file-roller                # archive manager backend for thunar-archive-plugin
 
     # GTK icon theme for styled systray icons
     papirus-icon-theme
@@ -41,6 +45,7 @@
     xdg-user-dirs
     acpi           # battery time remaining
     unzip
+    zip
 
     # Code Stuff
     vscode
@@ -401,6 +406,28 @@
 
   # Keybind: Mod+e opens yazi in kitty
   # (add this line to dwm config.def.h if desired — see cheatsheet)
+
+  # Thunar — tell exo to use kitty for "Open Terminal Here" (Go menu / toolbar)
+  home.file.".config/xfce4/helpers.rc".text = ''
+    TerminalEmulator=kitty
+  '';
+
+  # Thunar custom actions: right-click on a folder → Open Terminal Here
+  home.file.".config/Thunar/uca.xml".text = ''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <actions>
+    <action>
+        <icon>utilities-terminal</icon>
+        <name>Open Terminal Here</name>
+        <submenu></submenu>
+        <command>kitty --working-directory %f</command>
+        <description>Open Kitty terminal in the selected directory</description>
+        <patterns>*</patterns>
+        <startup-notify>true</startup-notify>
+        <directories/>
+    </action>
+    </actions>
+  '';
 
   programs.home-manager.enable = true;
 }
