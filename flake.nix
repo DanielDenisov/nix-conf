@@ -7,7 +7,7 @@
       url            = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    claude-desktop-linux.url = "github:k3d3/claude-desktop-linux-flake";
+    claude-desktop-linux.url = "github:poeck/claude-desktop-nix-flake";
   };
 
   outputs = { self, nixpkgs, home-manager, claude-desktop-linux, ... }: {
