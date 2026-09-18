@@ -7,9 +7,10 @@
       url            = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    claude-desktop-linux.url = "github:k3d3/claude-desktop-linux-flake";
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }: {
+  outputs = { self, nixpkgs, home-manager, claude-desktop-linux, ... }: {
 
     nixosConfigurations.nixdan = nixpkgs.lib.nixosSystem {
       system  = "x86_64-linux";
@@ -19,6 +20,9 @@
     homeConfigurations.nixdan = home-manager.lib.homeManagerConfiguration {
       pkgs    = nixpkgs.legacyPackages.x86_64-linux;
       modules = [ ./home.nix ];
+      extraSpecialArgs = {
+        claudeDesktop = claude-desktop-linux.packages.x86_64-linux.claude-desktop;
+      };
     };
 
   };

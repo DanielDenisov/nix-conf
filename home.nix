@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, claudeDesktop, ... }:
 
 {
   home.username = "nixdan";
@@ -61,6 +61,7 @@
     # Messaging
     signal-desktop
     discord
+    claudeDesktop
 
     # Browsers
     google-chrome
